@@ -19,9 +19,9 @@ import matplotlib.lines as mlines
 
 ############################ LaTeX rendering ##############################
 plt.rc('text', usetex=True)
-plt.rc('font', family='sans-serif')  # Use a serif font for LaTeX rendering
-plt.rc('font', size=16)  # Adjust size to your preference
-# Define the LaTeX preamble with siunitx
+plt.rc('font', family='sans-serif')  
+plt.rc('font', size=16)  
+
 plt.rcParams['text.latex.preamble'] = r'''
             \usepackage{siunitx}
             \sisetup{
