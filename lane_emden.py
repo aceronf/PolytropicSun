@@ -4,9 +4,7 @@
 Estructura y evolución estelar: Ecuación de Lane-Emden y modelos politrópicos
 solares.
 
-Created on Tue Nov 12 15:36:42 2024
-
-@author: alejandro
+@author: Alejandro Cerón Fernández
 """
 
 from scipy . integrate import solve_ivp
@@ -19,7 +17,7 @@ from scipy.interpolate import interp1d
 import matplotlib.lines as mlines
 
 
-# Enable LaTeX rendering
+############################ LaTeX rendering ##############################
 plt.rc('text', usetex=True)
 plt.rc('font', family='sans-serif')  # Use a serif font for LaTeX rendering
 plt.rc('font', size=16)  # Adjust size to your preference
@@ -44,27 +42,30 @@ plt.rcParams.update({
     "font.family": "sans-serif",
     "font.sans-serif": "Computer Modern Serif",
 })
+#############################################################################
+xi_min = 0.001 # Límite inferior de xi
+xi_max = 200 # Límite superior de xi
 
-xi_min = 0.001
-xi_max = 200
-
+# Condiciones iniciales:
 theta_0_ini = 1 # Valor de theta en xi=0
 theta_1_ini = 0 # Valor de theta' en xi=0
 
     
 nn = np.linspace(0, 5, 11)
 
-
+# Ecuación diferencial para integrar:
 def lane_emden(xi,theta,n):
     return [theta[1],
             -theta[0]**n -(2/xi)*theta[1]]
 
+# Condición para parar el proceso una vez theta alcance 0
 def zero_reached (xi, theta, n) :
     return (theta[0])
 
 zero_reached.terminal = True
 
-
+# Función para resolver la ecuación de Lane-Emden con solve_ivp para distintos
+# valores de n
 def solve_LE():
     """
     Función que integra la eq. de L-E para distintos n y devuelve un plot
@@ -111,7 +112,6 @@ ax1.tick_params(axis='both', which='major', labelsize=24)
 ax1.set_xlim(0 , 15)
 ax1.set_ylim(0, 1)
 
-# Add color bar to indicate which color corresponds to which `n` value
 sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=nn[0], vmax=nn[-1]))
 sm.set_array([])
 cbar = fig1.colorbar(sm, ax=ax1, spacing='proportional', aspect=30)
@@ -158,18 +158,13 @@ plt.show()
             
     
 ###############################################################################
-# 3 - Cálculo de Dn, Mn, Rn, Bn
+#################### 3 - Cálculo de Dn, Mn, Rn, Bn ############################
+###############################################################################
 
 t_1 = np.array([t[-1] for t in tt]) # Últimos valores de theta en cada n
 xi_1 = np.array([xi[-1] for xi in xx]) # Valores de xi que anulan theta en cada n --> R_n
 dt_dxi_1 = np.array([dt[-1] for dt in dtdt]) # Valores de la derivada de theta en xi_1
 
-#for i in range(len(nn)):
-    #print(f"n={nn[i]}")
-    #print(f"theta[-1]={t_1[i]}")
-    #print(f"xi_1={xi_1[i]}")
-    #print()
-    
 M_n = -xi_1**2*dt_dxi_1
 B_n = 1/(nn+1)*(-xi_1**2*dt_dxi_1)**(-2/3)
 D_n = 1/(-3/xi_1*dt_dxi_1)
@@ -181,7 +176,8 @@ for i in range(len(nn)):
 
 
 ###############################################################################
-# 3 - Densidad, masa, presión, temperatura para n=3
+########### 3 - Densidad, masa, presión, temperatura para n=3 #################
+###############################################################################
 
 # Modelo solar complejo:
 standard = np.loadtxt('A300_solar_model.dat', skiprows=2)
@@ -190,10 +186,9 @@ M_standard = standard[:,0]
 rho_standard = standard[:,3]
 P_standard = standard[:,4]
 T_standard = standard[:,2]
-
 fig, (ax3, ax4, ax5, ax6) = plt.subplots(4, 1, figsize=(8.27, 11.69), sharex=True)
 
-# Densidad: 
+### Densidad: ###
 # Convertimos xi a coordenada radial r/R:
 xi=xx[nn==3][0]
 r_R = xi/xi_1[nn==3][0]
@@ -210,13 +205,13 @@ ax3.set_xlim(0, 1)
 ax3.set_ylabel(r"$\log_{10}(\rho\, [\unit{\gram\per\centi\meter\cubed}])$ ", fontsize=14)
 ax3.legend(loc='best', frameon=False)
 
-# Masa relativa:
+### Masa relativa: ###
 M = -xi**2*dtdt[nn==3][0]/M_n[nn==3][0]
 ax4.plot(r_R, M, color='darkviolet')
 ax4.plot(R_standard, M_standard, color='limegreen', linestyle=(0, (5, 1)))
-ax4.set_ylabel(r"$M/M_\odot$", fontsize=14)
+ax4.set_ylabel(r"$m/M_\odot$", fontsize=14)
 
-# Presión:
+### Presión: ###
 # Calculamos la constante K:
 K = (M_sun/M_n[nn==3][0]/4/np.pi)**(2/3)*G*np.pi 
 # Calculamos la presión:
@@ -226,8 +221,7 @@ ax5.plot(R_standard, np.log10(P_standard), color='limegreen', linestyle=(0, (5, 
 ax5.set_ylim(10, 18)
 ax5.set_ylabel(r"$\log_{10}(P\, [\unit{\dyn\per\centi\meter\squared}])$ ", fontsize=14)
 
-# Temperatura:
-    
+### Temperatura: ###
 # Resolvemos la ecuación cuártica de Eddington:
 mu=0.61
 roots = np.roots([mu**4*0.003,0,0,1,-1])
@@ -238,15 +232,15 @@ ax6.plot(r_R, np.log10([t.to(u.K).value for t in T]), color='darkviolet')
 ax6.plot(R_standard, np.log10(T_standard), color='limegreen', linestyle=(0, (5, 1)))
 ax6.set_ylim(4, 8)
 ax6.set_ylabel(r"$\log_{10}(T\, [\unit{\kelvin}])$", fontsize=14)
-ax6.set_xlabel(r"$r/R$", fontsize=14)
+ax6.set_xlabel(r"$r/R_\odot$", fontsize=14)
 
 
-# Adjust layout to prevent overlap
 fig.tight_layout()
 plt.show()
 
 ###############################################################################
-# 4 - Densidad para n=2.5, n=3, n=3.5
+################### 4 - Densidad para n=2.5, n=3, n=3.5 #######################
+###############################################################################
 
 # Cálculo de Chi cuadrado para evaluar los modelos politrópicos.
 def chi_squared(polytropic_model:tuple, good_model:tuple):
@@ -292,11 +286,12 @@ fig, ax=plt.subplots(figsize=(15, 10))
 # Standard Solar Model:
 ax.plot(R_standard, np.log10(rho_standard), color='red' , linestyle=(0, (5, 1)), linewidth=5)
 
-for i, n in enumerate(nn):
+cmap = cm.get_cmap("viridis", len(nn[:-1]))
+for i, n in enumerate(nn[:-1]):
     xi_n=xx[nn==n][0]
     r_R_n = xi_n/xi_1[nn==n][0]
     central_density_n = D_n[nn==n]*average_density_sun
-    density_n=central_density_n*tt[nn==n][0]**3
+    density_n=central_density_n*tt[nn==n][0]**n
     ax.plot(r_R_n, np.log10([d.to(u.g / u.cm**3).value for d in density_n]), color=cmap(i), alpha=0.8)
     reduced_chi_squared.append(chi_squared(((r_R_n, [d.to(u.g / u.cm**3).value for d in density_n])), 
                                            (R_standard, rho_standard)))
@@ -305,34 +300,27 @@ for i, n in enumerate(nn):
     reduced_chi_squared_02_08.append(chi_squared(((r_R_n[interior_mask], np.array([d.to(u.g / u.cm**3).value for d in density_n])[interior_mask])), 
                                            (R_standard, rho_standard)))
 
-# Add color bar to indicate which color corresponds to which `n` value
-sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=nn[0], vmax=nn[-1]))
+sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=nn[0], vmax=nn[-2]))
 sm.set_array([])
 cbar = fig.colorbar(sm, ax=ax, spacing='proportional', aspect=30)
 cbar.set_label(r"Polytropic index ($n$)", rotation=270, labelpad=50, fontsize=30)
-tick_locs = (max(nn)/len(nn))*(np.arange(len(nn))+0.5)
+tick_locs = (max(nn[:-1])/len(nn[:-1]))*(np.arange(len(nn[:-1]))+0.5)
 cbar.set_ticks(tick_locs)
-cbar.set_ticklabels(nn, fontsize=24)
+cbar.set_ticklabels(nn[:-1], fontsize=24)
 ax.set_ylim(-3,3)
 ax.set_xlim(0,1)
-ax.set_xlabel(r"$r/R$", fontsize=30)
+ax.set_xlabel(r"$r/R_\odot$", fontsize=30)
 ax.set_ylabel(r"$\log_{10}(\rho\, [\unit{\gram\per\centi\meter\cubed}])$ ", fontsize=30)
 ax.tick_params(axis='both', which='major', labelsize=24)
-
-# Custom legend handles
 solar_handle = mlines.Line2D([], [], color="red", linestyle=(0, (5, 1)), label=r"Standard Solar Model",linewidth=5)
 poly_handle = mlines.Line2D([], [], color="black", linestyle="-", label="Polytropes")
-
-# Add legend with only these two handles
 ax.legend(handles=[solar_handle, poly_handle], fontsize=26,loc='best', frameon=False)
 
 plt.show()
 
-# Print header
 print(f"{'n':<8}{'Reduced Chi^2':<20}{'Reduced Chi^2 (0.2-0.8)':<20}")
 print("-" * 40)
 
-# Print rows
+
 for n, chi, chi_0208 in zip(nn, reduced_chi_squared, reduced_chi_squared_02_08):
     print(f"{n:<8.1f}{chi:<20.3f}{chi_0208:<20.3f}")
-
